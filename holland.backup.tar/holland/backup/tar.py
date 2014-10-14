@@ -2,7 +2,6 @@ import logging
 import os
 from subprocess import Popen, PIPE, STDOUT, list2cmdline
 from holland.core.exceptions import BackupError
-from holland.lib.compression import open_stream, lookup_compression
 
 LOG = logging.getLogger(__name__)
 
@@ -45,14 +44,17 @@ class TarPlugin(object):
 	def backup(self):
 		if self.dry_run:
 			return
+		if not os.path.exists(self.config['directory']) or not os.path.isdir(self.config['directory']):
+			raise BackupError('{0} is not a directory!'.format(self.config['directory']))
 		out_name = "{0}.tar.gz".format(self.config['directory'].replace('/', '_'))
 		outfile = os.path.join(self.target_directory, outname)
 		args = ['tar', '-xvzf', self.config['directory'], outfile]
 		errlog = TemporaryFile()
 		LOG.info("Executing: %s", subprocess.list2cmdline(args))
-		pid = subprocess.Popen(args,
-      stderr=errlog.fileno(),
-      close_fds=True)
+		pid = subprocess.Popen(
+			args,
+			stderr=errlog.fileno(),
+			close_fds=True)
 		status = pid.wait()
 		try:
 			errlog.flush()
