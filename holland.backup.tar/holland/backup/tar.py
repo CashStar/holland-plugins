@@ -53,11 +53,11 @@ class TarPlugin(object):
 		pid = subprocess.Popen(args,
       stderr=errlog.fileno(),
       close_fds=True)
-    status = pid.wait()
-    try:
-    	errlog.flush()
-      errlog.seek(0)
-      for line in errlog:
-      	LOG.error("%s[%d]: %s", self.cmd_path, pid.pid, line.rstrip())
-    finally:
-      errlog.close()
+		status = pid.wait()
+		try:
+			errlog.flush()
+			errlog.seek(0)
+			for line in errlog:
+				LOG.error("%s[%d]: %s", self.cmd_path, pid.pid, line.rstrip())
+		finally:
+			errlog.close()
