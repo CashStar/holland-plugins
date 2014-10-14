@@ -2,6 +2,7 @@ import logging
 import os
 from subprocess import Popen, PIPE, STDOUT, list2cmdline
 from holland.core.exceptions import BackupError
+from tempfile import TemporaryFile
 
 LOG = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class TarPlugin(object):
 
 	def estimate_backup_size(self):
 		total_size = 0
-		for dirpath, dirnames, filenames in os.walk(self.config['directory']):
+		for dirpath, dirnames, filenames in os.walk(self.config['tar']['directory']):
 			for f in filenames:
 				fp = os.path.join(dirpath, f)
 				# verify the symlink and such exist before trying to get its size
@@ -44,14 +45,14 @@ class TarPlugin(object):
 	def backup(self):
 		if self.dry_run:
 			return
-		if not os.path.exists(self.config['directory']) or not os.path.isdir(self.config['directory']):
-			raise BackupError('{0} is not a directory!'.format(self.config['directory']))
-		out_name = "{0}.tar.gz".format(self.config['directory'].replace('/', '_'))
-		outfile = os.path.join(self.target_directory, outname)
-		args = ['tar', '-xvzf', self.config['directory'], outfile]
+		if not os.path.exists(self.config['tar']['directory']) or not os.path.isdir(self.config['tar']['directory']):
+			raise BackupError('{0} is not a directory!'.format(self.config['tar']['directory']))
+		out_name = "{0}.tar.gz".format(self.config['tar']['directory'].replace('/', '_'))
+		outfile = os.path.join(self.target_directory, out_name)
+		args = ['tar', 'cvzf', outfile, self.config['tar']['directory']]
 		errlog = TemporaryFile()
-		LOG.info("Executing: %s", subprocess.list2cmdline(args))
-		pid = subprocess.Popen(
+		LOG.info("Executing: %s", list2cmdline(args))
+		pid = Popen(
 			args,
 			stderr=errlog.fileno(),
 			close_fds=True)
@@ -60,6 +61,6 @@ class TarPlugin(object):
 			errlog.flush()
 			errlog.seek(0)
 			for line in errlog:
-				LOG.error("%s[%d]: %s", self.cmd_path, pid.pid, line.rstrip())
+				LOG.error("%s[%d]: %s", list2cmdline(args), pid.pid, line.rstrip())
 		finally:
 			errlog.close()
