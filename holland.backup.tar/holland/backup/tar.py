@@ -47,7 +47,8 @@ class TarPlugin(object):
 			return
 		if not os.path.exists(self.config['tar']['directory']) or not os.path.isdir(self.config['tar']['directory']):
 			raise BackupError('{0} is not a directory!'.format(self.config['tar']['directory']))
-		out_name = "{0}.tar.gz".format(self.config['tar']['directory'].replace('/', '_'))
+		out_name = "{0}.tar.gz".format(
+			self.config['tar']['directory'].lstrip('/').replace('/', '_'))
 		outfile = os.path.join(self.target_directory, out_name)
 		args = ['tar', 'cvzf', outfile, self.config['tar']['directory']]
 		errlog = TemporaryFile()
